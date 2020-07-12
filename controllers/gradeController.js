@@ -1,9 +1,22 @@
 import { db } from '../models/index.js';
 import { logger } from '../config/logger.js';
 
+const Student = db.student;
+
 const create = async (req, res) => {
+
+  const {name, subject, type, value, lastModified} = req.body;
+  const student = new Student({
+    name,
+    subject,
+    type,
+    value,
+    lastModified,
+  })
+
   try {
-    res.send();
+    await student.save(student);
+    res.send('Grade criada com sucesso');
     logger.info(`POST /grade - ${JSON.stringify()}`);
   } catch (error) {
     res
@@ -22,7 +35,11 @@ const findAll = async (req, res) => {
     : {};
 
   try {
-    res.send();
+    const data = await Student.find(condition);
+    if(data.length < 1) {
+      res.status(404).send('Nenhuma grade encontrada');
+    }
+    res.send(data);
     logger.info(`GET /grade`);
   } catch (error) {
     res
@@ -36,7 +53,11 @@ const findOne = async (req, res) => {
   const id = req.params.id;
 
   try {
-    res.send();
+    const data = await Student.findById({_id: id})
+    if(data.length < 1) {
+      res.status(404).send('Grade não encontrada');
+    }
+    res.send(data);
 
     logger.info(`GET /grade - ${id}`);
   } catch (error) {
@@ -55,7 +76,11 @@ const update = async (req, res) => {
   const id = req.params.id;
 
   try {
-    res.send({ message: 'Grade atualizado com sucesso' });
+    const data = await Student.findByIdAndUpdate({_id: id}, req.body, {new: true});
+    if(data.length < 1) {
+      res.status(404).send('Grade não encontrada para atualizar');
+    }
+    res.send({ data, message: 'Grade atualizado com sucesso' });
 
     logger.info(`PUT /grade - ${id} - ${JSON.stringify(req.body)}`);
   } catch (error) {
@@ -68,7 +93,11 @@ const remove = async (req, res) => {
   const id = req.params.id;
 
   try {
-    res.send({ message: 'Grade excluido com sucesso' });
+    const data = await Student.findByIdAndDelete({_id: id});
+    if(data.length < 1) {
+      res.status(404).send('Grade não encontrada');
+    }
+    res.send({ message: 'Grade excluida com sucesso' });
 
     logger.info(`DELETE /grade - ${id}`);
   } catch (error) {
@@ -80,11 +109,13 @@ const remove = async (req, res) => {
 };
 
 const removeAll = async (req, res) => {
-  const id = req.params.id;
-
   try {
+    const data = await Student.deleteMany();
+    if(data.length < 1) {
+      res.status(404).send('Nenhuma grade disponível para exclusão');
+    }
     res.send({
-      message: `Grades excluidos`,
+      message: `Grades excluidas`,
     });
     logger.info(`DELETE /grade`);
   } catch (error) {
